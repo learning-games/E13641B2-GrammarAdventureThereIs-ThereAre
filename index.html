@@ -216,16 +216,11 @@ body:not(.in-game) #clock { display:none !important; }
 
 /* ข้อความแคปชั่น (ใช้เป็น "คำถามข้อความล้วน" ในด่าน 1) */
 #qCaption{
-  font-size: clamp(30px, 4.6vw, 60px);
-  font-weight: 1000;
-  line-height: 1.1;
-  text-shadow:0 3px 10px rgba(0,0,0,.55);
-  padding: 14px 22px;
-  border-radius: 18px;
-  background: var(--qbox-bg, rgba(0,0,0,.35));
-  border: 1px solid rgba(255,255,255,.22);
-  box-shadow:0 10px 22px rgba(0,0,0,0.35);
-  max-width: min(70vw, 720px);
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: transparent !important;
+  text-shadow: none !important;
 }
 
 /* ✅ NEW: ขนาดตัวอักษรคำถาม เฉพาะด่าน 1 */
@@ -1180,38 +1175,38 @@ const COUNTABLE_CAPTIONS = [
 
 /* ✅ 30 แคปชั่น (นามนับไม่ได้) — บอสเตรียมรูปให้ตรงคำทีหลังได้เลย */
 const UNCOUNTABLE_CAPTIONS = [
-"boys",
-"girls",
-"bananas",
-"cars",
-"boats",
-"eggs",
-"fingers",
-"dogs",
-"cats",
-"spiders",
+"three boy",
+"three girl",
+"four banana",
+"two car",
+"two boat",
+"twelve egg",
+"two finger",
+"two dog",
+"two cat",
+"three spider",
 
-"bugs",
-"birds",
-"balls",
-"frogs",
-"cookies",
-"sausages",
-"soldiers",
-"students",
-"doctors",
-"pencils",
+"four bug",
+"two bird",
+"six ball",
+"two frog",
+"ten cookie",
+"four sausage",
+"two soldier",
+"two student",
+"three doctor",
+"two pencil",
 
-"donuts",
-"pens",
-"spoons",
-"burgers",
-"houses",
-"apples",
-"books",
-"flowers",
-"shoes",
-"hearts",
+"nine donut",
+"two pen",
+"three spoon",
+"ten burger",
+"two house",
+"ten apple",
+"three book",
+"two flower",
+"two shoe",
+"three heart",
 ];
 
 /* ✅ NEW: ด่าน 3 (ชุดใหม่) — data3 = เอกพจน์, data4 = พหูพจน์ (17 รูป) */
@@ -1711,11 +1706,54 @@ function showQuestion(){
 
     qBox.dataset.answer = item.isTrue ? 'true' : 'false';
 
-    const art = pickAorAn(noun);
-    setAnswerButtonsTwoLines(
-      `There is`, `${art} ${noun}`,
-      `There are`, `${noun}`
-    );
+// ---------- ตัดจำนวนเฉพาะฝั่ง There is ----------
+const quantityWords = [
+  'one','two','three','four','five','six','seven','eight','nine','ten',
+  'eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen',
+  'eighteen','nineteen','twenty'
+];
+
+let singularNoun = noun.trim();
+
+// ถ้าขึ้นต้นด้วยตัวเลข เช่น "3 spider"
+if (/^\d+\s+/.test(singularNoun)) {
+  singularNoun = singularNoun.replace(/^\d+\s+/, '');
+}
+// ถ้าขึ้นต้นด้วยคำจำนวน เช่น "three spider"
+else {
+  const firstWord = singularNoun.split(' ')[0].toLowerCase();
+  if (quantityWords.includes(firstWord)) {
+    singularNoun = singularNoun.substring(firstWord.length).trim();
+  }
+}
+
+const art = pickAorAn(singularNoun);
+
+// ✅ ระบบเดิมคงไว้ + เพิ่ม: ถ้าฝั่งขวาถูก ให้เติม s ท้ายคำนามตัวสุดท้าย
+let rightCaption;
+
+if (item.isTrue) {
+  // ซ้ายถูก -> ขวาผิด (คงเดิม)
+  rightCaption = `a ${noun}`;
+} else {
+  // ขวาถูก -> เติม s แค่ตัวท้ายสุด (ไม่แตะคำจำนวน)
+  const parts = String(noun || '').trim().split(/\s+/);
+  if (parts.length) {
+    const last = parts.pop();
+    const pluralLast = last.endsWith('s') ? last : (last + 's');
+    parts.push(pluralLast);
+    rightCaption = parts.join(' ');
+  } else {
+    rightCaption = noun;
+  }
+}
+
+
+setAnswerButtonsTwoLines(
+  `There is`, `${art} ${singularNoun}`,
+  `There are`, rightCaption
+);
+
   }
 
   // ✅ เผื่ออนาคต: ด่านอื่นแบบ word bank
